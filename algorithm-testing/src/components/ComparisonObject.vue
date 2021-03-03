@@ -6,6 +6,7 @@
       <input
         type="number"
         name="ObjAmtField"
+        min="0"
         v-model.number="comparedObjAmt"
         @input="generateComparisonEntries"
       />
@@ -53,7 +54,7 @@
         </div>
       </div>
       <p v-if="comparisonObjects[j] && comparisonObjects[j].similarity !==undefined">
-        similarity: {{ comparisonObjects[j].similarity }}
+       <b> similarity: {{ comparisonObjects[j].similarity }}</b>
       </p>
     </div>
     <button @click.prevent="calculateSimilarities">
@@ -63,7 +64,7 @@
 </template>
 
 <script>
-const jaccard = require("jaccard");
+import { calculateJaccard, toObject } from '../helpers/similarity.js'
 export default {
   name: "ComparisonObject",
   data() {
@@ -89,16 +90,9 @@ export default {
         this.comparisonEntries
       );
     },
-    //Generates object from separate key and value arrays.
-    toObject(keys, values) {
-      const combined = keys.reduce(
-        (obj, key, index) => ({ ...obj, [key]: values[index] }),
-        {}
-      );
-      return combined;
-    },
+
     generateComparedObject() {
-      this.comparedObject = this.toObject(this.keys, this.values);
+      this.comparedObject = toObject(this.keys, this.values);
     },
     //Generates array entries for comparison objects
     generateComparisonEntries() {
@@ -111,38 +105,17 @@ export default {
     //Generates objects from arrays of keys and values
     generateComparisonObjects() {
       this.comparisonEntries.forEach((element) => {
-        const newObj = this.toObject(element.keys, element.values);
+        const newObj = toObject(element.keys, element.values);
         this.comparisonObjects.push(newObj);
       });
+      console.log(this.comparisonObjects)
     },
-    //Returns common key values from objects
-    getCommonKeys(obj1, obj2) {
-      let commonKeys = Object.keys(obj2).filter((key) =>
-        Object.keys(obj1).includes(key)
-      );
-      return commonKeys;
-    },
-    calculateSimilarities() {
+    async calculateSimilarities() {
       this.comparedObject = {}
       this.comparisonObjects = []
       this.generateComparedObject();
       this.generateComparisonObjects();
-      if (this.homeBrew) {
-        return true;
-      }
-      this.comparisonObjects.forEach((object) => {
-        let commonKeys = this.getCommonKeys(this.comparedObject, object);
-        let comparedValues = [];
-        let comparisonValues = [];
-        console.log(commonKeys)
-        commonKeys.forEach((key) => {
-          comparedValues.push(this.comparedObject[key]);
-          comparisonValues.push(object[key]);
-        });
-        let similarity = jaccard.index(comparedValues, comparisonValues);
-        console.log("similarity: ", similarity);
-        similarity ? object.similarity = similarity : object.similarity = 0 
-      });
+      calculateJaccard(this.comparisonObjects, this.comparedObject)
     },
   },
 };
