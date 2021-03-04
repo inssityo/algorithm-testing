@@ -13,6 +13,8 @@
 
       <label class="keyLabel" for="amtField"> # of parameters:</label>
       <input type="number" name="amtField" v-model.number="parameterAmt" />
+      <label class="keyLabel" for="algoSelector">Custom function</label>
+      <input type="checkbox" name="algoSelector" v-model="homeBrew"/>
     </div>
     <h4><u>Object compared to others:</u></h4>
     <div v-for="(item, i) in parameterAmt" :key="i">
@@ -54,7 +56,7 @@
         </div>
       </div>
       <p v-if="comparisonObjects[j] && comparisonObjects[j].similarity !==undefined">
-       <b> similarity: {{ comparisonObjects[j].similarity }}</b>
+       <b> {{homeBrew ? "Difference: " : "Similarity: "}} {{ comparisonObjects[j].similarity }}</b>
       </p>
     </div>
     <button @click.prevent="calculateSimilarities">
@@ -64,7 +66,7 @@
 </template>
 
 <script>
-import { calculateJaccard, toObject } from '../helpers/similarity.js'
+import { calculateJaccard, toObject, calculateCustomSimilarity } from '../helpers/similarity.js'
 export default {
   name: "ComparisonObject",
   data() {
@@ -76,7 +78,7 @@ export default {
       comparedObject: {},
       comparisonEntries: [],
       comparisonObjects: [],
-      homeBrew: false,
+      homeBrew: true,
     };
   },
   methods: {
@@ -115,7 +117,12 @@ export default {
       this.comparisonObjects = []
       this.generateComparedObject();
       this.generateComparisonObjects();
+      if(!this.homeBrew) {
       calculateJaccard(this.comparisonObjects, this.comparedObject)
+      } else {
+      console.log("csi")
+      calculateCustomSimilarity(this.comparisonObjects, this.comparedObject)
+      }
     },
   },
 };
